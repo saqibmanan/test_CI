@@ -34,7 +34,9 @@ jobs:
             -q
 
       - name: Upload JSON report artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2.2.0
         with:
-          name: single-test-report
+          name: report
           path: report-single.json
+          if-no-files-found: error
+          retention-days: 90
