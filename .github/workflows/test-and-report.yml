@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Run single test: tests/test_example.py
+    name: "Run single test: tests/test_example.py"
     runs-on: ubuntu-latest
 
     steps:
