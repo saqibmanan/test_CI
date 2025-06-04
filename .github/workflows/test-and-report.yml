@@ -34,7 +34,7 @@ jobs:
         run: |
           cd tests
           mkdir -p reports 
-          pytest tests/test_example.py --json-report --json-report-file=report-single.json -q
+          pytest tests/test_example.py --html=reports/reports.html
           chmod 777  /home/runner/work/test_CI/test_CI/tests/reports/
 
       - name: Set output
