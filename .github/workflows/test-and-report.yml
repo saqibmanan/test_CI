@@ -31,8 +31,8 @@ jobs:
             --json-report-file=report-single.json \
             -q
 
-#      - name: Upload JSON report artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: single-test-report
-#          path: report-single.json
+      - name: Upload JSON report artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: single-test-report
+          path: report-single.json
