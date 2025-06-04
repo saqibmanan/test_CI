@@ -28,7 +28,7 @@ jobs:
             --json-report-file=report-single.json \
             -q
 
-      - name: Debug: show `report-single.json` exists
+      - name: "Debug: show `report-single.json` exists"
         run: |
           ls -l report-single.json
 
