@@ -14,21 +14,40 @@ FAILED_SCREENSHOTS = {}
 
 @pytest.fixture(scope="session")
 def driver():
+    """
+    Launch a headless Chrome on GitHub Actions (Ubuntu). We force Chrome to use
+    a fresh, temporary user-data directory each run so that “user data directory
+    already in use” errors never occur.
+    """
+    # 1) Build ChromeOptions
     opts = Options()
     opts.headless = True
     opts.add_argument("--no-sandbox")
     opts.add_argument("--disable-gpu")
-    opts.add_argument("--disable-dev-shm-usage")
-    # force Chrome to use a fresh user-data directory under /tmp
-    opts.add_argument(f"--user-data-dir=/tmp/chrome-user-data-{os.getpid()}")
-    # optionally disable extensions for CI speed
+    opts.add_argument("--disable-dev-shm-usage")  # avoid /dev/shm issues
     opts.add_argument("--disable-extensions")
+    # create a brand‐new temp folder for Chrome’s user-data
+    tmp_profile = tempfile.mkdtemp(prefix="chrome-user-data-")
+    opts.add_argument(f"--user-data-dir={tmp_profile}")
 
+    # 2) Install chromedriver via webdriver_manager, then start Chrome
     driver_path = ChromeDriverManager().install()
     service = Service(driver_path)
     drv = webdriver.Chrome(service=service, options=opts)
     yield drv
-    drv.quit()
+
+    # 3) Teardown
+    try:
+        drv.quit()
+    except Exception:
+        pass
+    # (Optionally) remove the temp profile directory
+    try:
+        import shutil
+        shutil.rmtree(tmp_profile, ignore_errors=True)
+    except Exception:
+        pass
+
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_makereport(item, call):
     """
