@@ -1,6 +1,6 @@
 # .github/workflows/test-and-report.yml
 
-name: Test & Report (Single Test)
+name: Test & Report (Single File)
 
 on:
   push: {}
