@@ -1,13 +1,10 @@
-# .github/workflows/run-single-test.yml
-name: Run single test and upload report
+name: Single‐File Test & Report
 
 on:
-  pull_request:
-  push:
   workflow_dispatch:
 
 jobs:
-  run-test:
+  single_test:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +14,7 @@ jobs:
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
@@ -31,35 +28,44 @@ jobs:
             --json-report-file=report-single.json \
             -q
 
+      - name: Debug: show `report-single.json` exists
+        run: |
+          ls -l report-single.json
+
       - name: Create upload URL for Artifact
         id: create_artifact
         run: |
-          # 1) Create a new artifact container (max 5 GiB, expires in 1 week)
-          RESPONSE=$(curl \
-            -sSL \
-            -X POST https://api.github.com/repos/${{ github.repository }}/actions/artifacts \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{ 
-                  "name": "single-test-report", 
-                  "path": "report-single.json", 
-                  "expire_in_days": 7
-                }')
+          # 1) Create a new artifact (no "path" field in the JSON)
+          RESPONSE=$(
+            curl -sSL \
+              -X POST "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -d '{ "name": "single-test-report", "expire_in_days": 7 }'
+          )
+          echo "RAW RESPONSE: $RESPONSE" 1>&2
 
-          # 2) Extract the `upload_url` from the JSON response
-          UPLOAD_URL=$(echo "$RESPONSE" | jq -r .upload_url)
+          # 2) Extract the upload_url template (e.g. ".../artifacts/1234567{?name,label}")
+          UPLOAD_URL_RAW=$(echo "$RESPONSE" | jq -r .upload_url)
+          echo "Found upload_url template: $UPLOAD_URL_RAW" 1>&2
+
+          # 3) Replace the `{?name,label}` with `?name=report-single.json`
+          UPLOAD_URL="${UPLOAD_URL_RAW//\{\?name,label\}/\?name=report-single.json}"
+          echo "Final upload_url: $UPLOAD_URL" 1>&2
+
+          # 4) Export it for the next step
           echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
 
-      - name: Upload report-single.json
+      - name: Upload `report-single.json` into the Artifact
         run: |
-          # The upload_url returned by the previous step looks like:
-          # https://uploads.github.com/repos/OWNER/REPO/actions/artifacts/ARTIFACT_ID/zip
-          # We need to append ?name=<filename> to actually upload a single file.
-          URL="${{ steps.create_artifact.outputs.upload_url }}?name=report-single.json"
-
+          # Now that we have a valid URL (e.g. ".../artifacts/1234567?name=report-single.json"),
+          # do a PUT with the file as a binary ZIP payload.
           curl -sSL \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Content-Type: application/zip" \
             --data-binary @report-single.json \
-            "$URL"
-      
+            "${{ steps.create_artifact.outputs.upload_url }}"
+
+      - name: Confirm Artifact is uploaded
+        run: |
+          echo "✅ report-single.json has been pushed up as a GitHub Actions artifact named 'single-test-report'"
