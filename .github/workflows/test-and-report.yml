@@ -1,5 +1,3 @@
-# .github/workflows/test-and-report.yml
-
 name: Test & Report (Single File)
 
 on:
@@ -33,10 +31,14 @@ jobs:
             --json-report-file=report-single.json \
             -q
 
+      - name: "Debug: show directory tree"
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "---- file tree ----"
+          ls -R . | sed 's/^/    /'
+
       - name: Upload JSON report artifact
-        uses: actions/upload-artifact@v2.2.0
+        uses: actions/upload-artifact@v3
         with:
-          name: report
+          name: single-test-report
           path: report-single.json
-          if-no-files-found: error
-          retention-days: 90
