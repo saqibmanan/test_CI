@@ -14,21 +14,21 @@ FAILED_SCREENSHOTS = {}
 
 @pytest.fixture(scope="session")
 def driver():
-    """
-    Launch Chrome WebDriver (headless by default).
-    """
     opts = Options()
     opts.headless = True
-    opts.add_argument("--disable-gpu")
     opts.add_argument("--no-sandbox")
-    # install via webdriver_manager
+    opts.add_argument("--disable-gpu")
+    opts.add_argument("--disable-dev-shm-usage")
+    # force Chrome to use a fresh user-data directory under /tmp
+    opts.add_argument(f"--user-data-dir=/tmp/chrome-user-data-{os.getpid()}")
+    # optionally disable extensions for CI speed
+    opts.add_argument("--disable-extensions")
+
     driver_path = ChromeDriverManager().install()
     service = Service(driver_path)
     drv = webdriver.Chrome(service=service, options=opts)
-    drv.implicitly_wait(3)
     yield drv
     drv.quit()
-
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_makereport(item, call):
     """
