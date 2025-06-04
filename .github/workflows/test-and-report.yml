@@ -1,6 +1,13 @@
-name: Single‐File Test & Report
+name: Single-File Test & Report
+
+# Give GITHUB_TOKEN permission to create/upload artifacts:
+permissions:
+  contents: read        # (you probably only need to read your repo’s code)
+  actions: write        # <-- this lets you create/upload artifacts
 
 on:
+  pull_request:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -28,14 +35,14 @@ jobs:
             --json-report-file=report-single.json \
             -q
 
-      - name: "Debug: show `report-single.json` exists"
+      - name: Debug: show `report-single.json` exists
         run: |
           ls -l report-single.json
 
       - name: Create upload URL for Artifact
         id: create_artifact
         run: |
-          # 1) Create a new artifact (no "path" field in the JSON)
+          # 1) Create a new artifact (no "path" field in the JSON body).
           RESPONSE=$(
             curl -sSL \
               -X POST "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
@@ -43,13 +50,15 @@ jobs:
               -H "Accept: application/vnd.github.v3+json" \
               -d '{ "name": "single-test-report", "expire_in_days": 7 }'
           )
+
+          # Print the raw response so you can see if it succeeded or not.
           echo "RAW RESPONSE: $RESPONSE" 1>&2
 
           # 2) Extract the upload_url template (e.g. ".../artifacts/1234567{?name,label}")
           UPLOAD_URL_RAW=$(echo "$RESPONSE" | jq -r .upload_url)
           echo "Found upload_url template: $UPLOAD_URL_RAW" 1>&2
 
-          # 3) Replace the `{?name,label}` with `?name=report-single.json`
+          # 3) Replace the '{?name,label}' portion with '?name=report-single.json'
           UPLOAD_URL="${UPLOAD_URL_RAW//\{\?name,label\}/\?name=report-single.json}"
           echo "Final upload_url: $UPLOAD_URL" 1>&2
 
@@ -58,7 +67,7 @@ jobs:
 
       - name: Upload `report-single.json` into the Artifact
         run: |
-          # Now that we have a valid URL (e.g. ".../artifacts/1234567?name=report-single.json"),
+          # Now that we have a valid upload URL (e.g. ".../artifacts/1234567?name=report-single.json"),
           # do a PUT with the file as a binary ZIP payload.
           curl -sSL \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
@@ -68,4 +77,4 @@ jobs:
 
       - name: Confirm Artifact is uploaded
         run: |
-          echo "✅ report-single.json has been pushed up as a GitHub Actions artifact named 'single-test-report'"
+          echo "✅ report-single.json has been pushed as a GitHub Actions artifact named 'single-test-report'"
