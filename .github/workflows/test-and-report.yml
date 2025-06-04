@@ -31,12 +31,12 @@ jobs:
             --json-report-file=report-single.json \
             -q
 
-      # Attempt #1: pin to a known v3.x of upload-artifact
-      - name: Upload JSON report artifact
-        uses: actions/upload-artifact@v3.1.2
-        with:
-          name: single-test-report
-          path: report-single.json
+#      # Attempt #1: pin to a known v3.x of upload-artifact
+#      - name: Upload JSON report artifact
+#        uses: actions/upload-artifact@v3.1.2
+#        with:
+#          name: single-test-report
+#          path: report-single.json
 
       # If the above still fails, uncomment the following block:
       # 
