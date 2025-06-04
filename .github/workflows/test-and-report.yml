@@ -37,8 +37,8 @@ jobs:
           echo "---- file tree ----"
           ls -R . | sed 's/^/    /'
 
-      - name: Upload JSON report artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: single-test-report
-          path: report-single.json
+#      - name: Upload JSON report artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: single-test-report
+#          path: report-single.json
