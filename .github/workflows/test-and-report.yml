@@ -48,4 +48,4 @@ jobs:
       - name: Upload via gh CLI
         run: |
           echo "$GITHUB_TOKEN" | gh auth login --with-token
-          gh run upload-artifact report-single.json --name single-test-report
+          gh run upload-artifact report-single.json 
